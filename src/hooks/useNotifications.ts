@@ -53,21 +53,22 @@ export function useNotifications() {
       if (payload.notification) {
         const { title, body, icon } = payload.notification;
         
-        // Show browser notification
+        // Show actual browser notification (priority)
         if (Notification.permission === 'granted') {
           new Notification(title || 'Beehive Alert', {
             body: body || 'Check your beehive monitor',
             icon: icon || '/icon-192.png',
             badge: '/icon-192.png',
             tag: 'beehive-alert',
-            requireInteraction: true
+            requireInteraction: true,
+            silent: false
+          });
+        } else {
+          // Only show toast as fallback if notifications not granted
+          toast.error(title || 'Beehive Alert', {
+            description: body || 'Check your beehive monitor'
           });
         }
-        
-        // Also show toast
-        toast.error(title || 'Beehive Alert', {
-          description: body || 'Check your beehive monitor'
-        });
         
         // Play alert sound
         const audio = new Audio('/alert.mp3');

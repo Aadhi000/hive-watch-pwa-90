@@ -23,6 +23,8 @@ export function useFirebaseData() {
   useEffect(() => {
     // Listen to current data
     const currentRef = ref(database, 'beehive');
+    let lastHistoricalUpdate = Date.now();
+    
     const unsubscribeCurrent = onValue(currentRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -30,12 +32,16 @@ export function useFirebaseData() {
         setIsOnline(true);
         setLastSeen(new Date());
         
-        // Update historical data with current reading (including abnormal values)
-        const timestamp = data.last_time || new Date().toISOString();
-        setHistoricalData(prev => ({
-          ...prev,
-          [timestamp]: data
-        }));
+        // Update historical data only every minute
+        const now = Date.now();
+        if (now - lastHistoricalUpdate >= 60000) { // 1 minute = 60000ms
+          const timestamp = data.last_time || new Date().toISOString();
+          setHistoricalData(prev => ({
+            ...prev,
+            [timestamp]: data
+          }));
+          lastHistoricalUpdate = now;
+        }
         
         // Check for abnormal values
         const isAbnormal = 
@@ -44,7 +50,7 @@ export function useFirebaseData() {
           data.air_quality < 60;  // Changed from airpurity to air_quality
           
         if (isAbnormal) {
-          // Play alert sound with user interaction check
+          // Play alert sound
           const playAlert = async () => {
             try {
               const audio = new Audio('/alert.mp3');
@@ -52,36 +58,52 @@ export function useFirebaseData() {
               await audio.play();
             } catch (error) {
               console.warn('Could not play alert sound:', error);
-              // Fallback: try to play on next user interaction
-              document.addEventListener('click', async () => {
-                try {
-                  const audio = new Audio('/alert.mp3');
-                  audio.volume = 0.5;
-                  await audio.play();
-                } catch (e) {
-                  console.warn('Alert sound still blocked:', e);
-                }
-              }, { once: true });
             }
           };
           
           playAlert();
           
-          // Show toast notification
-          if (data.temperature < 18 || data.temperature > 30) {
-            toast.error(`Temperature Alert: ${data.temperature}°C`, {
-              description: 'Temperature is outside safe range (18-30°C)'
+          // Send actual browser notifications
+          if (Notification.permission === 'granted') {
+            let title = 'Beehive Alert 🚨';
+            let body = '';
+            
+            if (data.temperature < 18 || data.temperature > 30) {
+              title = `Temperature Alert: ${data.temperature}°C`;
+              body = 'Temperature is outside safe range (18-30°C)';
+            } else if (data.humidity < 60) {
+              title = `Humidity Alert: ${data.humidity}%`;
+              body = 'Humidity is below safe threshold (60%)';
+            } else if (data.air_quality < 60) {
+              title = `Air Quality Alert: ${data.air_quality}%`;
+              body = 'Air quality is below safe threshold (60%)';
+            }
+            
+            new Notification(title, {
+              body,
+              icon: '/icon-192.png',
+              badge: '/icon-192.png',
+              tag: 'beehive-alert',
+              requireInteraction: true,
+              silent: false
             });
-          }
-          if (data.humidity < 60) {
-            toast.error(`Humidity Alert: ${data.humidity}%`, {
-              description: 'Humidity is below safe threshold (60%)'
-            });
-          }
-          if (data.air_quality < 60) {
-            toast.error(`Air Quality Alert: ${data.air_quality}%`, {
-              description: 'Air quality is below safe threshold (60%)'
-            });
+          } else {
+            // Fallback to toast if notifications not granted
+            if (data.temperature < 18 || data.temperature > 30) {
+              toast.error(`Temperature Alert: ${data.temperature}°C`, {
+                description: 'Temperature is outside safe range (18-30°C)'
+              });
+            }
+            if (data.humidity < 60) {
+              toast.error(`Humidity Alert: ${data.humidity}%`, {
+                description: 'Humidity is below safe threshold (60%)'
+              });
+            }
+            if (data.air_quality < 60) {
+              toast.error(`Air Quality Alert: ${data.air_quality}%`, {
+                description: 'Air quality is below safe threshold (60%)'
+              });
+            }
           }
         }
       }
