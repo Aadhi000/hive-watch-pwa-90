@@ -100,7 +100,69 @@ export function SensorCard({ type, value, unit, historicalData }: SensorCardProp
   };
 
   const chartData = filterDataByRange();
-  const labels = chartData.map(d => d.timestamp);
+  
+  // Format timestamps based on time range
+  const formatTimestamp = (timestamp: string, range: TimeRange) => {
+    const date = new Date(timestamp);
+    
+    switch (range) {
+      case 'live':
+        return date.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        });
+      case '1h':
+        // Show every 10 minutes
+        const minutes = date.getMinutes();
+        if (minutes % 10 === 0) {
+          return date.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          });
+        }
+        return '';
+      case '24h':
+        // Show every hour
+        const hour = date.getHours();
+        if (date.getMinutes() === 0) {
+          return date.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          });
+        }
+        return '';
+      case '7d':
+        // Show every 6 hours
+        if (date.getHours() % 6 === 0 && date.getMinutes() === 0) {
+          return date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit'
+          });
+        }
+        return '';
+      case '15d':
+      case '30d':
+        // Show daily
+        if (date.getHours() === 0 && date.getMinutes() === 0) {
+          return date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+          });
+        }
+        return '';
+      default:
+        return date.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+    }
+  };
+  
+  const labels = chartData.map(d => formatTimestamp(d.timestamp, timeRange));
   const values = chartData.map(d => d.value);
 
   return (
