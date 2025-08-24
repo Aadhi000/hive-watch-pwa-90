@@ -4,7 +4,7 @@ import { StatusIndicator } from '@/components/StatusIndicator';
 import { Loader2 } from 'lucide-react';
 
 export function Dashboard() {
-  const { currentData, historicalData, isOnline, lastSeen, loading } = useFirebaseData();
+  const { currentData, historicalData, isOnline, loading } = useFirebaseData();
 
   if (loading) {
     return (
@@ -43,7 +43,7 @@ export function Dashboard() {
     <div className="container mx-auto px-4 py-8 space-y-6 animate-fade-in">
       {/* Status Bar */}
       <div className="flex justify-end animate-slide-up">
-        <StatusIndicator isOnline={isOnline} lastSeen={lastSeen} />
+        <StatusIndicator isOnline={isOnline} historicalData={historicalData} />
       </div>
 
       {/* Sensor Grid */}

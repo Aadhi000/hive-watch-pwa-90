@@ -1,20 +1,31 @@
+// statusIndicator.ts
 import { Circle, Wifi, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { HistoricalData } from '@/hooks/useFirebaseData'; // Adjust the import path
 
 interface StatusIndicatorProps {
   isOnline: boolean;
-  lastSeen: Date | null;
+  historicalData: HistoricalData;
 }
 
-export function StatusIndicator({ isOnline, lastSeen }: StatusIndicatorProps) {
+export function StatusIndicator({ isOnline, historicalData }: StatusIndicatorProps) {
   const formatLastSeen = () => {
-    if (!lastSeen) return 'Never';
-    
+    // Get all timestamps (keys) from the historical data
+    const timestamps = Object.keys(historicalData);
+    if (timestamps.length === 0) {
+      return 'Never';
+    }
+
+    // Find the most recent timestamp
+    const lastTimestamp = timestamps.sort().pop();
+    if (!lastTimestamp) return 'Never';
+
+    const lastSeen = new Date(lastTimestamp);
     const diff = Date.now() - lastSeen.getTime();
     const seconds = Math.floor(diff / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
-    
+
     if (seconds < 60) return 'Just now';
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
@@ -22,29 +33,29 @@ export function StatusIndicator({ isOnline, lastSeen }: StatusIndicatorProps) {
   };
 
   return (
-    <div className="flex items-center gap-3 p-4 rounded-xl shadow-neumorphic bg-card">
+    <div className="flex items-center gap-3 p-4 rounded-xl shadow-lg bg-card">
       <div className="flex items-center gap-2">
         <div className="relative">
-          <Circle 
+          <Circle
             className={cn(
               "w-3 h-3 fill-current",
               isOnline ? "text-success" : "text-danger"
             )}
           />
           {isOnline && (
-            <Circle 
+            <Circle
               className="absolute top-0 left-0 w-3 h-3 text-success animate-ping"
             />
           )}
         </div>
-        
+
         {isOnline ? (
           <Wifi className="w-4 h-4 text-success" />
         ) : (
           <WifiOff className="w-4 h-4 text-danger" />
         )}
       </div>
-      
+
       <div className="flex flex-col">
         <span className="text-sm font-medium text-foreground">
           {isOnline ? 'Online' : 'Offline'}

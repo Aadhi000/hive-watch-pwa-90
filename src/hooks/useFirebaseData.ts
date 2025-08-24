@@ -9,6 +9,7 @@ export interface SensorData {
   humidity: number;
   air_quality: number;
   last_time: string;
+  movement: boolean;
 }
 
 export interface HistoricalData {
@@ -19,7 +20,6 @@ export function useFirebaseData() {
   const [currentData, setCurrentData] = useState<SensorData | null>(null);
   const [historicalData, setHistoricalData] = useState<HistoricalData>({});
   const [isOnline, setIsOnline] = useState(true);
-  const [lastSeen, setLastSeen] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAbnormalDetected, setIsAbnormalDetected] = useState(false);
 
@@ -88,10 +88,17 @@ export function useFirebaseData() {
         const data = snapshot.val();
         if (data) {
           setCurrentData(data);
-          setIsOnline(true);
-          setLastSeen(new Date());
-
+          
           const now = Date.now();
+          const lastUpdateTime = new Date(data.last_time).getTime();
+          
+          // Check if last update was within the last 5 minutes (300,000 milliseconds)
+          if (now - lastUpdateTime < 60000) {
+            setIsOnline(true);
+          } else {
+            setIsOnline(false);
+          }
+
           if (now - lastHistoricalUpdateRef.current >= 60000) {
             const timestamp = data.last_time || new Date().toISOString();
             setHistoricalData((prev) => ({
@@ -137,15 +144,12 @@ export function useFirebaseData() {
     };
     fetchHistoricalData();
 
-    const statusInterval = setInterval(() => {
-      if (lastSeen && new Date().getTime() - lastSeen.getTime() > 60000) {
-        setIsOnline(false);
-      }
-    }, 10000);
+    // The statusInterval and lastSeen states are now unnecessary.
+    // The online/offline status is handled directly by comparing the
+    // current time with the last_time from the data.
 
     return () => {
       unsubscribeCurrent();
-      clearInterval(statusInterval);
     };
   }, []);
 
@@ -189,7 +193,6 @@ export function useFirebaseData() {
     currentData,
     historicalData,
     isOnline,
-    lastSeen,
     loading,
   };
 }
