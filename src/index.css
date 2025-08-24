@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* BEE Brand Colors - Yellow and Navy Blue theme */
+    --background: 48 100% 96%;
+    --foreground: 220 47% 20%;
+
+    --card: 48 70% 97%;
+    --card-foreground: 220 47% 20%;
+
+    --popover: 48 70% 97%;
+    --popover-foreground: 220 47% 20%;
+
+    --primary: 220 65% 35%;
+    --primary-foreground: 48 100% 96%;
+
+    --secondary: 45 100% 51%;
+    --secondary-foreground: 220 47% 20%;
+
+    --muted: 48 30% 92%;
+    --muted-foreground: 220 20% 40%;
+
+    --accent: 350 80% 58%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 45 40% 88%;
+    --input: 45 40% 88%;
+    --ring: 220 65% 35%;
+
+    --radius: 1rem;
+
+    /* BEE specific colors */
+    --honey: 45 100% 51%;
+    --honey-light: 48 100% 65%;
+    --honey-dark: 39 100% 40%;
+    
+    --success: 142 76% 36%;
+    --warning: 45 100% 51%;
+    --danger: 0 72% 51%;
+    
+    /* Sensor colors */
+    --temp-color: 28 100% 50%;
+    --humidity-color: 199 89% 48%;
+    --air-color: 142 76% 36%;
+    
+    /* Gradients */
+    --gradient-honey: linear-gradient(135deg, hsl(45 100% 51%), hsl(48 100% 65%));
+    --gradient-navy: linear-gradient(135deg, hsl(220 65% 35%), hsl(220 55% 45%));
+    --gradient-pink: linear-gradient(135deg, hsl(350 80% 58%), hsl(20 90% 60%));
+    --gradient-danger: linear-gradient(135deg, hsl(0 72% 51%), hsl(0 84% 60%));
+    --gradient-success: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%));
+    
+    /* Smooth Shadows */
+    --shadow-neumorphic: 0 8px 30px -12px rgba(0, 0, 0, 0.15);
+    --shadow-neumorphic-inset: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 40px hsl(45 100% 51% / 0.3);
+    --shadow-smooth: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    
+    /* Smooth Animations */
+    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-elastic: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .dark {
+    --background: 220 35% 10%;
+    --foreground: 48 70% 95%;
+
+    --card: 220 30% 14%;
+    --card-foreground: 48 70% 95%;
+
+    --popover: 220 30% 14%;
+    --popover-foreground: 48 70% 95%;
+
+    --primary: 45 100% 51%;
+    --primary-foreground: 220 35% 10%;
+
+    --secondary: 220 55% 40%;
+    --secondary-foreground: 48 70% 95%;
+
+    --muted: 220 25% 20%;
+    --muted-foreground: 48 35% 65%;
+
+    --accent: 350 70% 55%;
+    --accent-foreground: 48 70% 95%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 25% 22%;
+    --input: 220 25% 22%;
+    --ring: 45 100% 51%;
+    
+    /* Dark mode shadows */
+    --shadow-neumorphic: 0 8px 30px -12px rgba(0, 0, 0, 0.5);
+    --shadow-neumorphic-inset: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    --shadow-glow: 0 0 40px hsl(45 100% 51% / 0.2);
+    --shadow-smooth: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+    --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+  
+  /* PWA Styles */
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Better scroll behavior */
+  :root {
+    scroll-behavior: smooth;
+  }
+}
