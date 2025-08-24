@@ -1,6 +1,7 @@
 // useFirebaseData.ts
 import { useEffect, useState, useRef } from 'react';
-import { database, ref, onValue, get, child } from '@/lib/firebase';
+import { database, ref, onValue, get, child, set } from '@/lib/firebase';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { toast } from 'sonner';
 
 export interface SensorData {
@@ -23,8 +24,61 @@ export function useFirebaseData() {
   const [isAbnormalDetected, setIsAbnormalDetected] = useState(false);
 
   const lastHistoricalUpdateRef = useRef(Date.now());
-  
-  // This useEffect now only handles the Firebase data subscription.
+
+  // --- FCM setup ---
+  const registerFCM = async () => {
+    try {
+      const messaging = getMessaging();
+
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        toast.error("Notifications blocked", {
+          description: "Enable notifications in your browser settings to receive alerts"
+        });
+        return;
+      }
+
+      const token = await getToken(messaging, {
+        vapidKey: 'BBRchB8hfF-ulW2Lyu2PXfPuqOhMENLI5qLo-L5PvJwK5OEIzSOwB9RWDSJxfh7yWreHIhvxeqGkpydBPbKqT3w'
+      });
+
+      if (!token) {
+        console.warn("⚠️ No FCM token retrieved. Check VAPID key / Firebase config.");
+        return;
+      }
+
+      const tokenKey = token.replace(/[.#$/[\]]/g, '_');
+      await set(ref(database, `fcmTokens/${tokenKey}`), token);
+      console.log('✅ FCM Token saved:', token);
+
+    } catch (err) {
+      console.error("❌ Error registering FCM:", err);
+      toast.error("Notification Error", {
+        description: "Could not register for push notifications"
+      });
+    }
+  };
+
+  useEffect(() => {
+    registerFCM();
+
+    const messaging = getMessaging();
+    const unsubscribe = onMessage(messaging, (payload) => {
+      console.log('Foreground message received:', payload);
+      const title = payload.notification?.title || 'Beehive Alert 🚨';
+      const body = payload.notification?.body || payload.data?.body || 'Check your hive conditions';
+
+      toast(title, {
+        description: body,
+        icon: '🚨'
+      });
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   useEffect(() => {
     const currentRef = ref(database, 'beehive');
 
@@ -95,43 +149,35 @@ export function useFirebaseData() {
     };
   }, []);
 
-  // This new useEffect handles only the continuous toast alerts.
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
-    
-    // Function to generate and show the improved toast
-    const showAbnormalToast = () => {
-      let title = 'Beehive Alert 🚨';
-      let body = 'Abnormal sensor values detected';
-      
-      if (currentData) {
-        const abnormalConditions = [];
-        if (currentData.temperature < 18 || currentData.temperature > 30) {
-          abnormalConditions.push(`Temperature: ${currentData.temperature}°C`);
-        }
-        if (currentData.humidity < 60) {
-          abnormalConditions.push(`Humidity: ${currentData.humidity}%`);
-        }
-        if (currentData.air_quality < 60) {
-          abnormalConditions.push(`Air Quality: ${currentData.air_quality}%`);
-        }
-        body = abnormalConditions.join(', ') || body;
+    const sendNotificationAndToast = async () => {
+      console.warn('⚠️ Abnormal condition detected');
+      try {
+        await fetch('http://localhost:3001/send-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sensorData: currentData })
+        });
+        console.log('✅ API call for notification sent.');
+      } catch (apiError) {
+        console.error('❌ Failed to call API route:', apiError);
       }
       
+      const title = 'Beehive Alert 🚨';
+      const body = 'Abnormal sensor values detected';
       toast(title, {
         description: body,
-        icon: '🚨',
+        icon: '🚨'
       });
     };
-
+    
     if (isAbnormalDetected && currentData) {
-      // Show the first toast immediately
-      showAbnormalToast();
-      // Then set up an interval to show subsequent toasts every 5 seconds
-      intervalId = setInterval(showAbnormalToast, 5000);
+      // Send immediately when condition is first met, then start interval
+      sendNotificationAndToast();
+      intervalId = setInterval(sendNotificationAndToast, 5000);
     }
 
-    // Clean up the interval when the condition is no longer met or the component unmounts
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
@@ -148,7 +194,17 @@ export function useFirebaseData() {
   };
 }
 
-// This function is no longer needed but is left here for reference.
 export const isDeviceRegistered = async () => {
-  return false;
+  try {
+    if (!('Notification' in window)) return false;
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (!registration) return false;
+    const fcmToken = localStorage.getItem('fcmToken');
+    if (!fcmToken) return false;
+    if (Notification.permission !== 'granted') return false;
+    return true;
+  } catch (error) {
+    console.error('Error checking device registration:', error);
+    return false;
+  }
 };
