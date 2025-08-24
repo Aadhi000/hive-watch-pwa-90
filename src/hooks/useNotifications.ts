@@ -153,3 +153,25 @@ export function useFirebaseData() {
     loading
   };
 }
+
+
+export function useNotifications() {
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  useEffect(() => {
+    // Ask permission when enabling
+    if (notificationsEnabled && Notification.permission !== "granted") {
+      Notification.requestPermission().then((permission) => {
+        if (permission !== "granted") {
+          setNotificationsEnabled(false);
+        }
+      });
+    }
+  }, [notificationsEnabled]);
+
+  const toggleNotifications = () => {
+    setNotificationsEnabled((prev) => !prev);
+  };
+
+  return { notificationsEnabled, toggleNotifications };
+}
