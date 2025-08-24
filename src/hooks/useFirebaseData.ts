@@ -30,6 +30,13 @@ export function useFirebaseData() {
         setIsOnline(true);
         setLastSeen(new Date());
         
+        // Update historical data with current reading (including abnormal values)
+        const timestamp = data.last_time || new Date().toISOString();
+        setHistoricalData(prev => ({
+          ...prev,
+          [timestamp]: data
+        }));
+        
         // Check for abnormal values
         const isAbnormal = 
           data.temperature < 18 || data.temperature > 30 ||
@@ -37,9 +44,28 @@ export function useFirebaseData() {
           data.air_quality < 60;  // Changed from airpurity to air_quality
           
         if (isAbnormal) {
-          // Play alert sound
-          const audio = new Audio('/alert.mp3');
-          audio.play().catch(console.error);
+          // Play alert sound with user interaction check
+          const playAlert = async () => {
+            try {
+              const audio = new Audio('/alert.mp3');
+              audio.volume = 0.5;
+              await audio.play();
+            } catch (error) {
+              console.warn('Could not play alert sound:', error);
+              // Fallback: try to play on next user interaction
+              document.addEventListener('click', async () => {
+                try {
+                  const audio = new Audio('/alert.mp3');
+                  audio.volume = 0.5;
+                  await audio.play();
+                } catch (e) {
+                  console.warn('Alert sound still blocked:', e);
+                }
+              }, { once: true });
+            }
+          };
+          
+          playAlert();
           
           // Show toast notification
           if (data.temperature < 18 || data.temperature > 30) {

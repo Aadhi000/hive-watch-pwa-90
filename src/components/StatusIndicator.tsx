@@ -1,4 +1,4 @@
-import { Circle, Wifi } from 'lucide-react';
+import { Circle, Wifi, WifiOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface StatusIndicatorProps {
@@ -23,17 +23,25 @@ export function StatusIndicator({ isOnline, lastSeen }: StatusIndicatorProps) {
 
   return (
     <div className="flex items-center gap-3 p-4 rounded-xl shadow-neumorphic bg-card">
-      <div className="relative">
-        <Circle 
-          className={cn(
-            "w-3 h-3 fill-current",
-            isOnline ? "text-success" : "text-danger"
-          )}
-        />
-        {isOnline && (
+      <div className="flex items-center gap-2">
+        <div className="relative">
           <Circle 
-            className="absolute top-0 left-0 w-3 h-3 text-success animate-ping"
+            className={cn(
+              "w-3 h-3 fill-current",
+              isOnline ? "text-success" : "text-danger"
+            )}
           />
+          {isOnline && (
+            <Circle 
+              className="absolute top-0 left-0 w-3 h-3 text-success animate-ping"
+            />
+          )}
+        </div>
+        
+        {isOnline ? (
+          <Wifi className="w-4 h-4 text-success" />
+        ) : (
+          <WifiOff className="w-4 h-4 text-danger" />
         )}
       </div>
       

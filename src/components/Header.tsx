@@ -7,47 +7,7 @@ import { cn } from '@/lib/utils';
 // Custom BEE Logo Component
 function BeeLogo({ className }: { className?: string }) {
   return (
-    <img src="/favicon.png" alt="Bee Logo" className={cn("w-12 h-12 rounded-xl", className)} />
-  );
-}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* Honeycomb Pattern Background */}
-      <defs>
-        <pattern id="honeycomb" x="0" y="0" width="20" height="17.32" patternUnits="userSpaceOnUse">
-          <polygon points="10,0 20,5 20,12.32 10,17.32 0,12.32 0,5" fill="none" stroke="currentColor" strokeOpacity="0.1" strokeWidth="0.5"/>
-        </pattern>
-      </defs>
-      <rect width="100" height="100" fill="url(#honeycomb)" />
-      
-      {/* Bee Body - Hexagon */}
-      <polygon 
-        points="50,20 70,35 70,55 50,70 30,55 30,35" 
-        fill="hsl(var(--primary))"
-        stroke="hsl(var(--primary))"
-        strokeWidth="2"
-      />
-      
-      {/* Bee Wings */}
-      <ellipse cx="25" cy="40" rx="15" ry="25" fill="hsl(var(--accent))" fillOpacity="0.8" transform="rotate(-20 25 40)"/>
-      <ellipse cx="75" cy="40" rx="15" ry="25" fill="hsl(var(--accent))" fillOpacity="0.8" transform="rotate(20 75 40)"/>
-      
-      {/* Bee Stripes */}
-      <rect x="30" y="38" width="40" height="4" fill="hsl(var(--honey))"/>
-      <rect x="30" y="48" width="40" height="4" fill="hsl(var(--honey))"/>
-      
-      {/* Bee Eyes */}
-      <circle cx="42" cy="32" r="3" fill="white"/>
-      <circle cx="58" cy="32" r="3" fill="white"/>
-      <circle cx="42" cy="32" r="2" fill="black"/>
-      <circle cx="58" cy="32" r="2" fill="black"/>
-      
-      {/* Antennae */}
-      <line x1="45" y1="25" x2="40" y2="15" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round"/>
-      <line x1="55" y1="25" x2="60" y2="15" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round"/>
-      <circle cx="40" cy="15" r="2" fill="hsl(var(--primary))"/>
-      <circle cx="60" cy="15" r="2" fill="hsl(var(--primary))"/>
-    </svg>
+    <img src="/lovable-uploads/83ddb07f-5078-4b20-a46e-605de4f57d65.png" alt="BEE Logo" className={cn("w-12 h-12", className)} />
   );
 }
 
