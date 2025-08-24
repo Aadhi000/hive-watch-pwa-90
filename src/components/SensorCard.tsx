@@ -102,7 +102,7 @@ export function SensorCard({ type, value, unit, historicalData }: SensorCardProp
   const chartData = filterDataByRange();
   
   // Format timestamps based on time range
-  const formatTimestamp = (timestamp: string, range: TimeRange) => {
+  const formatTimestamp = (timestamp: string, range: TimeRange, index: number, totalLength: number) => {
     const date = new Date(timestamp);
     
     switch (range) {
@@ -113,9 +113,8 @@ export function SensorCard({ type, value, unit, historicalData }: SensorCardProp
           hour12: false 
         });
       case '1h':
-        // Show every 10 minutes
-        const minutes = date.getMinutes();
-        if (minutes % 10 === 0) {
+        // Show every 10 minutes or every few data points
+        if (index % Math.max(1, Math.floor(totalLength / 6)) === 0) {
           return date.toLocaleTimeString('en-US', { 
             hour: '2-digit', 
             minute: '2-digit',
@@ -124,9 +123,8 @@ export function SensorCard({ type, value, unit, historicalData }: SensorCardProp
         }
         return '';
       case '24h':
-        // Show every hour
-        const hour = date.getHours();
-        if (date.getMinutes() === 0) {
+        // Show every few hours
+        if (index % Math.max(1, Math.floor(totalLength / 8)) === 0) {
           return date.toLocaleTimeString('en-US', { 
             hour: '2-digit', 
             minute: '2-digit',
@@ -135,19 +133,26 @@ export function SensorCard({ type, value, unit, historicalData }: SensorCardProp
         }
         return '';
       case '7d':
-        // Show every 6 hours
-        if (date.getHours() % 6 === 0 && date.getMinutes() === 0) {
+        // Show every day
+        if (index % Math.max(1, Math.floor(totalLength / 7)) === 0) {
           return date.toLocaleDateString('en-US', { 
             month: 'short', 
-            day: 'numeric',
-            hour: '2-digit'
+            day: 'numeric'
           });
         }
         return '';
       case '15d':
+        // Show every 2-3 days
+        if (index % Math.max(1, Math.floor(totalLength / 5)) === 0) {
+          return date.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+          });
+        }
+        return '';
       case '30d':
-        // Show daily
-        if (date.getHours() === 0 && date.getMinutes() === 0) {
+        // Show weekly
+        if (index % Math.max(1, Math.floor(totalLength / 4)) === 0) {
           return date.toLocaleDateString('en-US', { 
             month: 'short', 
             day: 'numeric' 
@@ -162,7 +167,7 @@ export function SensorCard({ type, value, unit, historicalData }: SensorCardProp
     }
   };
   
-  const labels = chartData.map(d => formatTimestamp(d.timestamp, timeRange));
+  const labels = chartData.map((d, index) => formatTimestamp(d.timestamp, timeRange, index, chartData.length));
   const values = chartData.map(d => d.value);
 
   return (
