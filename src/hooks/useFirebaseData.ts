@@ -9,7 +9,7 @@ export interface SensorData {
   humidity: number;
   air_quality: number;
   last_time: string;
-  movement: boolean;
+  movement: string; // Updated to string
 }
 
 export interface HistoricalData {
@@ -108,10 +108,10 @@ export function useFirebaseData() {
             lastHistoricalUpdateRef.current = now;
           }
 
-          const isAbnormal =
-            data.temperature < 18 ||
-            data.temperature > 30 ||
-            data.humidity < 60 ||
+          const isAbnormal = 
+            data.temperature < 18 || 
+            data.temperature > 30 || 
+            data.humidity < 60 || 
             data.air_quality < 60;
           
           setIsAbnormalDetected(isAbnormal);

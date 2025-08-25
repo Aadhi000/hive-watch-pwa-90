@@ -74,6 +74,16 @@ export function Dashboard() {
             historicalData={getHistoricalArray('air_quality')}
           />
         </div>
+
+        {/* Add a new card for bee movement */}
+        <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
+          <SensorCard
+            type="movement"
+            value={currentData.movement ?? false}
+            unit=""
+            historicalData={[]} // No historical data yet for movement, so pass an empty array.
+          />
+        </div>
       </div>
 
       {/* Last Update */}

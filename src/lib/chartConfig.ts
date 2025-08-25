@@ -25,7 +25,7 @@ ChartJS.register(
   zoomPlugin
 );
 
-export const getChartOptions = (title: string, isDark: boolean): ChartOptions<'line'> => ({
+export const getChartOptions = (title: string, isDark: boolean, timestamps: string[], unit: string): ChartOptions<'line'> => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -48,7 +48,26 @@ export const getChartOptions = (title: string, isDark: boolean): ChartOptions<'l
       titleColor: isDark ? '#fef3c7' : '#1f1408',
       bodyColor: isDark ? '#fef3c7' : '#1f1408',
       borderColor: isDark ? '#44403c' : '#fde68a',
-      borderWidth: 1
+      borderWidth: 1,
+      callbacks: {
+        title: (tooltipItems) => {
+          if (tooltipItems.length > 0) {
+            const index = tooltipItems[0].dataIndex;
+            const rawTimestamp = timestamps[index];
+            const date = new Date(rawTimestamp);
+            return date.toLocaleString();
+          }
+          return '';
+        },
+        label: (tooltipItem) => {
+          const label = tooltipItem.dataset.label || '';
+          const value = tooltipItem.raw;
+          if (typeof value === 'number') {
+            return `${label}: ${value.toFixed(1)} ${unit || ''}`;
+          }
+          return `${label}: ${value} ${unit || ''}`;
+        }
+      }
     },
     zoom: {
       zoom: {
@@ -98,10 +117,11 @@ export const getChartOptions = (title: string, isDark: boolean): ChartOptions<'l
   }
 });
 
-export const getChartData = (labels: string[], data: number[], color: string, isDark: boolean) => ({
+export const getChartData = (labels: string[], data: number[], color: string, isDark: boolean, unit: string) => ({
   labels,
   datasets: [
     {
+      label: 'Sensor Value',
       data,
       borderColor: color,
       backgroundColor: `${color}33`,
@@ -112,7 +132,8 @@ export const getChartData = (labels: string[], data: number[], color: string, is
       pointBackgroundColor: color,
       pointBorderColor: isDark ? '#1f1408' : '#ffffff',
       pointBorderWidth: 2,
-      pointHoverRadius: 6
+      pointHoverRadius: 6,
+      unit,
     }
   ]
 });
