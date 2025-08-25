@@ -1,5 +1,6 @@
+// SensorCard.tsx
 import { useState } from 'react';
-import { Thermometer, Droplets, Wind, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { Thermometer, Droplets, Wind, TrendingUp, TrendingDown, Minus, Bug } from 'lucide-react';
 import { Line } from 'react-chartjs-2';
 import { useTheme } from '@/hooks/useTheme';
 import { getChartOptions, getChartData } from '@/lib/chartConfig';
@@ -7,8 +8,8 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 interface SensorCardProps {
-  type: 'temperature' | 'humidity' | 'airpurity';
-  value: number;
+  type: 'temperature' | 'humidity' | 'airpurity' | 'movement';
+  value: number | string; // Updated to accept a string
   unit: string;
   historicalData: { timestamp: string; value: number }[];
 }
@@ -34,6 +35,13 @@ const sensorConfig = {
     chartColor: '#10b981',
     label: 'Air Quality',
     normalRange: { min: 60, max: 100 }
+  },
+  movement: {
+    icon: Bug,
+    color: 'success', 
+    chartColor: '#22c55e',
+    label: 'Bee Movement',
+    normalRange: { min: 0, max: 1 }
   }
 };
 
@@ -49,11 +57,19 @@ export function SensorCard({ type, value, unit, historicalData }: SensorCardProp
   const config = sensorConfig[type];
   const Icon = config.icon;
   
-  const isAbnormal = value != null && (value < config.normalRange.min || 
-    (config.normalRange.max < 100 && value > config.normalRange.max));
+  const isMovement = type === 'movement';
   
-  const trend = value != null && historicalData.length > 1 && historicalData[historicalData.length - 2]?.value != null
-    ? value - historicalData[historicalData.length - 2].value 
+  // Updated logic to handle the new string value for movement
+  const displayValue = isMovement 
+    ? (value === "Movement Detected" ? 'Detected' : 'Not Detected') 
+    : (value != null ? (value as number).toFixed(1) : '---');
+
+  // isAbnormal check is unchanged as it correctly excludes movement
+  const isAbnormal = !isMovement && (value != null && ((value as number) < config.normalRange.min ||  
+    (config.normalRange.max < 100 && (value as number) > config.normalRange.max)));
+  
+  const trend = !isMovement && value != null && historicalData.length > 1 && historicalData[historicalData.length - 2]?.value != null 
+    ? (value as number) - historicalData[historicalData.length - 2].value  
     : 0;
 
   const filterDataByRange = () => {
@@ -101,79 +117,16 @@ export function SensorCard({ type, value, unit, historicalData }: SensorCardProp
 
   const chartData = filterDataByRange();
   
-  // Format timestamps based on time range
-  const formatTimestamp = (timestamp: string, range: TimeRange, index: number, totalLength: number) => {
-    const date = new Date(timestamp);
-    
-    switch (range) {
-      case 'live':
-        return date.toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: false 
-        });
-      case '1h':
-        // Show every 10 minutes or every few data points
-        if (index % Math.max(1, Math.floor(totalLength / 6)) === 0) {
-          return date.toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: false 
-          });
-        }
-        return '';
-      case '24h':
-        // Show every few hours
-        if (index % Math.max(1, Math.floor(totalLength / 8)) === 0) {
-          return date.toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: false 
-          });
-        }
-        return '';
-      case '7d':
-        // Show every day
-        if (index % Math.max(1, Math.floor(totalLength / 7)) === 0) {
-          return date.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric'
-          });
-        }
-        return '';
-      case '15d':
-        // Show every 2-3 days
-        if (index % Math.max(1, Math.floor(totalLength / 5)) === 0) {
-          return date.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric' 
-          });
-        }
-        return '';
-      case '30d':
-        // Show weekly
-        if (index % Math.max(1, Math.floor(totalLength / 4)) === 0) {
-          return date.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric' 
-          });
-        }
-        return '';
-      default:
-        return date.toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        });
-    }
-  };
-  
-  const labels = chartData.map((d, index) => formatTimestamp(d.timestamp, timeRange, index, chartData.length));
+  // These are the raw timestamps used for the tooltip
+  const timestamps = chartData.map(d => d.timestamp);
+  // These are the formatted labels for the chart's x-axis
+  const labels = timestamps.map((d, index) => formatTimestamp(d, timeRange, index, chartData.length));
   const values = chartData.map(d => d.value);
 
   return (
     <div className="space-y-4 animate-fade-in">
       <div
-        onClick={() => setShowChart(!showChart)}
+        onClick={() => !isMovement && setShowChart(!showChart)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={cn(
@@ -198,13 +151,17 @@ export function SensorCard({ type, value, unit, historicalData }: SensorCardProp
             type === 'temperature' && "bg-gradient-to-br from-orange-400/20 to-red-400/20",
             type === 'humidity' && "bg-gradient-to-br from-blue-400/20 to-cyan-400/20",
             type === 'airpurity' && "bg-gradient-to-br from-green-400/20 to-emerald-400/20",
+            // Updated color logic for movement
+            type === 'movement' && (value === "Movement Detected" ? "bg-gradient-to-br from-green-400/20 to-lime-400/20" : "bg-gradient-to-br from-red-400/20 to-rose-400/20"),
             "group-hover:scale-110 group-hover:rotate-3"
           )}>
             <Icon className={cn(
               "w-6 h-6 transition-colors duration-300",
               type === 'temperature' && "text-temp",
               type === 'humidity' && "text-humidity",
-              type === 'airpurity' && "text-air"
+              type === 'airpurity' && "text-air",
+              // Updated color logic for movement
+              type === 'movement' && (value === "Movement Detected" ? "text-success" : "text-danger")
             )} />
           </div>
           
@@ -224,24 +181,26 @@ export function SensorCard({ type, value, unit, historicalData }: SensorCardProp
           <p className="text-sm font-medium text-muted-foreground">{config.label}</p>
           <div className="flex items-baseline gap-1">
             <span className="text-3xl font-bold text-foreground">
-              {value != null ? value.toFixed(1) : '---'}
+              {displayValue}
             </span>
             <span className="text-lg text-muted-foreground">{unit}</span>
           </div>
           
-          <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
-            <div 
-              className={cn(
-                "h-full transition-all duration-500",
-                isAbnormal ? "bg-gradient-danger" : `bg-${config.color}`
-              )}
-              style={{ width: `${Math.min(100, Math.max(0, value || 0))}%` }}
-            />
-          </div>
+          {!isMovement && (
+            <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
+              <div 
+                className={cn(
+                  "h-full transition-all duration-500",
+                  isAbnormal ? "bg-gradient-danger" : `bg-${config.color}`
+                )}
+                style={{ width: `${Math.min(100, Math.max(0, (value as number) || 0))}%` }}
+              />
+            </div>
+          )}
         </div>
       </div>
       
-      {showChart && (
+      {showChart && !isMovement && (
         <div className="p-6 rounded-2xl shadow-neumorphic bg-card animate-fade-in">
           <div className="flex gap-2 mb-4 flex-wrap">
             {(['live', '1h', '24h', '7d', '15d', '30d'] as TimeRange[]).map(range => (
@@ -259,8 +218,8 @@ export function SensorCard({ type, value, unit, historicalData }: SensorCardProp
           
           <div className="h-64">
             <Line 
-              data={getChartData(labels, values, config.chartColor, isDark)}
-              options={getChartOptions(`${config.label} History`, isDark)}
+              data={getChartData(labels, values as number[], config.chartColor, isDark, unit)}
+              options={getChartOptions(`${config.label} History`, isDark, timestamps, unit)}
             />
           </div>
         </div>
@@ -268,3 +227,63 @@ export function SensorCard({ type, value, unit, historicalData }: SensorCardProp
     </div>
   );
 }
+
+const formatTimestamp = (timestamp: string, range: TimeRange, index: number, totalLength: number) => {
+  const date = new Date(timestamp);
+  
+  switch (range) {
+    case 'live':
+      return date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+    case '1h':
+      if (index % Math.max(1, Math.floor(totalLength / 6)) === 0) {
+        return date.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        });
+      }
+      return '';
+    case '24h':
+      if (index % Math.max(1, Math.floor(totalLength / 8)) === 0) {
+        return date.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        });
+      }
+      return '';
+    case '7d':
+      if (index % Math.max(1, Math.floor(totalLength / 7)) === 0) {
+        return date.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric'
+        });
+      }
+      return '';
+    case '15d':
+      if (index % Math.max(1, Math.floor(totalLength / 5)) === 0) {
+        return date.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric' 
+        });
+      }
+      return '';
+    case '30d':
+      if (index % Math.max(1, Math.floor(totalLength / 4)) === 0) {
+        return date.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric' 
+        });
+      }
+      return '';
+    default:
+      return date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+  }
+};
